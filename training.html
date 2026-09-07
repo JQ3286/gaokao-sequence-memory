@@ -1,0 +1,934 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="2023全国乙卷等差数列与绝对值数列四芯片记忆训练">
+  <meta name="theme-color" content="#f5f7f9">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="2023全国乙卷数列记忆训练">
+  <meta property="og:description" content="四芯片动态记忆训练：锁参数、成双图、翻绝对值、累计封存">
+  <title>2023全国乙卷数列记忆训练</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f5f7f9;
+      --foreground: #17212b;
+      --card: #ffffff;
+      --border: #d5dde4;
+      --muted-foreground: #60717f;
+      --viz-series-1: #176b87;
+      --viz-series-2: #a55316;
+      --viz-series-3: #5d4aa5;
+      --font-size-base: 16px;
+      --radius: 16px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { margin: 0; min-width: 320px; background: var(--background); color: var(--foreground); }
+    button { font: inherit; min-height: 44px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+    .experience-shell { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 40px; }
+    .experience-header { display: grid; gap: 14px; margin-bottom: 20px; }
+    .experience-header h1 { margin: 0; font-size: clamp(24px, 4vw, 38px); font-weight: 650; letter-spacing: -0.02em; }
+    .experience-kicker { margin: 0; color: var(--muted-foreground); }
+    .route-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .route-tab,
+    .route-action {
+      appearance: none;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--foreground);
+      padding: 11px 14px;
+      cursor: pointer;
+    }
+    .route-tab[aria-current="step"] { border-color: var(--viz-series-1); box-shadow: inset 0 0 0 1px var(--viz-series-1); }
+    .route-tab:disabled,
+    .route-action:disabled { cursor: not-allowed; opacity: 0.45; }
+    .route-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-block: 1px solid var(--border);
+      padding: 12px 0;
+      color: var(--muted-foreground);
+    }
+    .route-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .route-action-primary { background: var(--foreground); color: var(--background); border-color: var(--foreground); }
+    .route-panel { min-height: 520px; }
+    .route-panel > div { margin-inline: auto; }
+    @media (max-width: 720px) {
+      .experience-shell { width: min(100% - 16px, 1180px); padding-top: 16px; }
+      .route-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .route-status { align-items: stretch; flex-direction: column; }
+      .route-action { flex: 1 1 140px; }
+      .route-panel { min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="experience-shell" id="sequence-memory-experience">
+    <header class="experience-header">
+      <div>
+        <p class="experience-kicker">数学记忆训练 · 四芯片线路</p>
+        <h1>2023全国乙卷｜等差数列与绝对值数列</h1>
+      </div>
+      <nav class="route-nav" aria-label="四芯片训练线路">
+        <button type="button" class="route-tab" data-route-tab="1" aria-current="step">芯片一 · 锁参数</button>
+        <button type="button" class="route-tab" data-route-tab="2" disabled>芯片二 · 成双图</button>
+        <button type="button" class="route-tab" data-route-tab="3" disabled>芯片三 · 翻绝对值</button>
+        <button type="button" class="route-tab" data-route-tab="4" disabled>芯片四 · 累计封存</button>
+      </nav>
+      <div class="route-status" aria-live="polite">
+        <span id="route-status-text">当前：芯片一。按芯片内部按钮完成四个记忆动作。</span>
+        <div class="route-actions">
+          <button type="button" class="route-action" id="route-restart">重新开始</button>
+          <button type="button" class="route-action route-action-primary" id="route-next" disabled>进入芯片二</button>
+        </div>
+      </div>
+    </header>
+    
+      <section class="route-panel" data-route-panel="1">
+        <style>
+  #sequence-chip-one {
+    width: 100%;
+    color: var(--foreground);
+  }
+
+  #sequence-chip-one .given-row,
+  #sequence-chip-one .slot-row,
+  #sequence-chip-one .brick-row,
+  #sequence-chip-one .equation-row,
+  #sequence-chip-one .final-flow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  #sequence-chip-one .given-row {
+    margin-bottom: 14px;
+  }
+
+  #sequence-chip-one .chip-stage {
+    min-height: 330px;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+  }
+
+  #sequence-chip-one .stage-content {
+    width: 100%;
+    display: grid;
+    gap: 20px;
+    justify-items: center;
+    animation: chip-one-enter 220ms ease-out;
+  }
+
+  @keyframes chip-one-enter {
+    from { transform: translateY(8px); opacity: 0.65; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  #sequence-chip-one .prompt {
+    color: var(--muted-foreground);
+    text-align: center;
+  }
+
+  #sequence-chip-one .slot {
+    min-width: 132px;
+    padding: 14px 18px;
+    border-bottom: 2px solid var(--border);
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: calc(var(--font-size-base) * 1.18);
+  }
+
+  #sequence-chip-one .slot.locked {
+    border-bottom-color: var(--viz-series-3);
+    background: color-mix(in srgb, var(--viz-series-3) 12%, transparent);
+  }
+
+  #sequence-chip-one .a-brick,
+  #sequence-chip-one .d-brick {
+    display: grid;
+    place-items: center;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  #sequence-chip-one .a-brick {
+    width: 116px;
+    height: 62px;
+    border-radius: 9px;
+    border: 2px solid var(--viz-series-1);
+    background: color-mix(in srgb, var(--viz-series-1) 22%, var(--card));
+    font-size: calc(var(--font-size-base) * 1.1);
+  }
+
+  #sequence-chip-one .d-brick {
+    width: 58px;
+    height: 46px;
+    border-radius: 7px;
+    border: 2px solid var(--viz-series-2);
+    background: repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--viz-series-2) 30%, var(--card)) 0 5px,
+      color-mix(in srgb, var(--viz-series-2) 12%, var(--card)) 5px 10px
+    );
+    font-size: calc(var(--font-size-base) * 1.05);
+  }
+
+  #sequence-chip-one .math-line {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: calc(var(--font-size-base) * 1.28);
+    text-align: center;
+  }
+
+  #sequence-chip-one .sum-parts {
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+
+  #sequence-chip-one .a-stack {
+    display: grid;
+    gap: 2px;
+  }
+
+  #sequence-chip-one .a-mini {
+    width: 64px;
+    height: 20px;
+    border: 1px solid var(--viz-series-1);
+    background: color-mix(in srgb, var(--viz-series-1) 22%, var(--card));
+  }
+
+  #sequence-chip-one .d-triangle {
+    display: grid;
+    gap: 2px;
+  }
+
+  #sequence-chip-one .d-row {
+    display: flex;
+    gap: 2px;
+  }
+
+  #sequence-chip-one .d-mini {
+    width: 13px;
+    height: 13px;
+    border: 1px solid var(--viz-series-2);
+    background: color-mix(in srgb, var(--viz-series-2) 25%, var(--card));
+  }
+
+  #sequence-chip-one .part-label {
+    margin-top: 7px;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  #sequence-chip-one .equations {
+    display: inline-grid;
+    gap: 8px;
+    position: relative;
+    padding-left: 28px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: calc(var(--font-size-base) * 1.2);
+  }
+
+  #sequence-chip-one .equations::before {
+    content: "{";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-54%);
+    font-size: 2.5em;
+    line-height: 1;
+  }
+
+  #sequence-chip-one .flow-arrow {
+    color: var(--muted-foreground);
+    font-size: calc(var(--font-size-base) * 1.45);
+  }
+
+  #sequence-chip-one .compact-source {
+    display: grid;
+    gap: 7px;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: calc(var(--font-size-base) * 1.03);
+  }
+
+  #sequence-chip-one .output-lock {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 8px 18px;
+    align-items: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: calc(var(--font-size-base) * 1.16);
+  }
+
+  #sequence-chip-one .action-shell {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+  }
+
+  @media (max-width: 520px) {
+    #sequence-chip-one .chip-stage {
+      min-height: 390px;
+      padding: 16px;
+    }
+
+    #sequence-chip-one .final-flow {
+      display: grid;
+      justify-items: center;
+    }
+
+    #sequence-chip-one .flow-arrow {
+      transform: rotate(90deg);
+    }
+  }
+</style>
+
+<div id="sequence-chip-one">
+  <div class="given-row" aria-label="题目给出的两个条件">
+    <span class="viz-badge">a₂ = 11</span>
+    <span class="viz-badge">S₁₀ = 40</span>
+  </div>
+
+  <section class="card" aria-live="polite">
+    <div class="chip-stage">
+      <div id="chip-one-stage" class="stage-content"></div>
+    </div>
+  </section>
+
+  <div class="action-shell">
+    <div class="viz-controls" aria-label="芯片运行步骤">
+      <button type="button" class="btn btn-primary" data-step="1">1　拆 a₂</button>
+      <button type="button" class="btn" data-step="2" disabled>2　拆 S₁₀</button>
+      <button type="button" class="btn" data-step="3" disabled>3　联立锁定</button>
+      <button type="button" class="btn" data-step="4" disabled>4　封存输出</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const root = document.getElementById('sequence-chip-one');
+    const stage = root.querySelector('#chip-one-stage');
+    const buttons = Array.from(root.querySelectorAll('[data-step]'));
+    let current = 0;
+
+    const renderInitial = () => {
+      stage.innerHTML = `
+        <div class="prompt">两个条件，要锁定哪两个数？</div>
+        <div class="slot-row">
+          <div class="slot">a₁ = ？</div>
+          <div class="slot">d = ？</div>
+        </div>
+      `;
+    };
+
+    const renderA2 = () => {
+      stage.innerHTML = `
+        <div class="prompt">第二项里面，只有“首项＋一步公差”</div>
+        <div class="brick-row">
+          <div class="a-brick">a₁</div>
+          <div class="math-line">＋</div>
+          <div class="d-brick">d</div>
+          <div class="math-line">＝ 11</div>
+        </div>
+        <div class="math-line">a₁ ＋ d ＝ 11</div>
+      `;
+    };
+
+    const renderS10 = () => {
+      stage.innerHTML = `
+        <div class="prompt">十项拆成“十块首项＋公差三角形”</div>
+        <div class="sum-parts">
+          <div><div class="a-stack" id="chip-a-stack"></div><div class="part-label">10a₁</div></div>
+          <div class="math-line">＋</div>
+          <div><div class="d-triangle" id="chip-d-triangle"></div><div class="part-label">(10×9÷2)d = 45d</div></div>
+          <div class="math-line">＝ 40</div>
+        </div>
+        <div class="math-line">10a₁ ＋ 45d ＝ 40</div>
+      `;
+      const aStack = stage.querySelector('#chip-a-stack');
+      const triangle = stage.querySelector('#chip-d-triangle');
+      for (let i = 0; i < 10; i += 1) {
+        const block = document.createElement('span');
+        block.className = 'a-mini';
+        aStack.appendChild(block);
+      }
+      for (let count = 1; count <= 9; count += 1) {
+        const row = document.createElement('div');
+        row.className = 'd-row';
+        for (let i = 0; i < count; i += 1) {
+          const block = document.createElement('span');
+          block.className = 'd-mini';
+          row.appendChild(block);
+        }
+        triangle.appendChild(row);
+      }
+    };
+
+    const renderLock = () => {
+      stage.innerHTML = `
+        <div class="prompt">两个关系同时进入，锁定两个插槽</div>
+        <div class="equation-row">
+          <div class="equations"><span>a₁ ＋ d ＝ 11</span><span>10a₁ ＋ 45d ＝ 40</span></div>
+          <div class="flow-arrow">→</div>
+          <div class="slot-row">
+            <div class="slot locked">a₁ = 13</div>
+            <div class="slot locked">d = −2</div>
+          </div>
+        </div>
+      `;
+    };
+
+    const renderFinal = () => {
+      stage.innerHTML = `
+        <div class="prompt">芯片封存：以后看到这两个条件，直接启动同一连接</div>
+        <div class="final-flow">
+          <div class="compact-source"><span>a₂ = 11</span><span>S₁₀ = 40</span></div>
+          <div class="flow-arrow">→</div>
+          <div class="compact-source"><span>a₁+d=11</span><span>10a₁+45d=40</span></div>
+          <div class="flow-arrow">→</div>
+          <div class="output-lock"><span>a₁</span><span>13</span><span>d</span><span>−2</span></div>
+        </div>
+      `;
+    };
+
+    const render = () => {
+      if (current === 0) renderInitial();
+      if (current === 1) renderA2();
+      if (current === 2) renderS10();
+      if (current === 3) renderLock();
+      if (current === 4) renderFinal();
+    };
+
+    buttons.forEach((button, index) => {
+      button.addEventListener('click', () => {
+        const step = Number(button.dataset.step);
+        if (step !== current + 1) return;
+        current = step;
+        button.disabled = true;
+        button.classList.remove('btn-primary');
+        button.setAttribute('aria-pressed', 'true');
+        if (buttons[index + 1]) {
+          buttons[index + 1].disabled = false;
+          buttons[index + 1].classList.add('btn-primary');
+        }
+        render();
+      });
+    });
+
+    render();
+  })();
+</script>
+
+      </section>
+
+      <section class="route-panel" data-route-panel="2" hidden>
+        <style>
+  #sequence-chip-two { width: 100%; color: var(--foreground); }
+  #sequence-chip-two .input-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  #sequence-chip-two .stage-shell { min-height: 390px; padding: 20px; display: grid; place-items: center; }
+  #sequence-chip-two .stage { width: 100%; display: grid; gap: 16px; justify-items: center; animation: chip-two-enter 180ms ease-out; }
+  @keyframes chip-two-enter { from { transform: translateY(7px); opacity: .68; } to { transform: translateY(0); opacity: 1; } }
+  #sequence-chip-two .prompt { color: var(--muted-foreground); text-align: center; }
+  #sequence-chip-two .term-track { width: 100%; display: grid; grid-template-columns: repeat(10,minmax(54px,1fr)); gap: 6px; }
+  #sequence-chip-two .term-cell { min-height: 62px; display: grid; place-items: center; border-bottom: 2px solid var(--border); font-family: Georgia,"Times New Roman",serif; }
+  #sequence-chip-two .term-cell.filled { border-bottom-color: var(--viz-series-1); background: color-mix(in srgb,var(--viz-series-1) 11%,transparent); }
+  #sequence-chip-two .term-index { color: var(--muted-foreground); font-family: system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  #sequence-chip-two .term-value { font-size: calc(var(--font-size-base) * 1.12); }
+  #sequence-chip-two .math-line { font-family: Georgia,"Times New Roman",serif; font-size: calc(var(--font-size-base) * 1.2); text-align: center; }
+  #sequence-chip-two .graph-wrap { width: 100%; }
+  #sequence-chip-two .graph { display: block; width: 100%; height: auto; }
+  #sequence-chip-two .axis { stroke: var(--foreground); stroke-width: 1.4; }
+  #sequence-chip-two .grid { stroke: var(--border); stroke-width: 1; }
+  #sequence-chip-two .a-guide,
+  #sequence-chip-two .s-guide { fill: none; stroke: var(--viz-series-1); stroke-width: 2; stroke-dasharray: 8 7; opacity: .5; }
+  #sequence-chip-two .a-point { fill: var(--viz-series-1); stroke: var(--background); stroke-width: 3; }
+  #sequence-chip-two .s-point { fill: var(--viz-series-2); stroke: var(--background); stroke-width: 3; }
+  #sequence-chip-two .graph text { fill: var(--foreground); font-family: system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; font-weight: 400; }
+  #sequence-chip-two .graph .math { font-family: Georgia,"Times New Roman",serif; }
+  #sequence-chip-two .graph .muted { fill: var(--muted-foreground); }
+  #sequence-chip-two .final-two { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  #sequence-chip-two .final-graph { display: grid; gap: 5px; justify-items: center; }
+  #sequence-chip-two .final-formula { font-family: Georgia,"Times New Roman",serif; font-size: calc(var(--font-size-base) * 1.08); }
+  #sequence-chip-two .controls-shell { display: flex; justify-content: center; margin-top: 14px; }
+  @media (max-width: 680px) {
+    #sequence-chip-two .stage-shell { min-height: 470px; padding: 14px; }
+    #sequence-chip-two .term-track { grid-template-columns: repeat(5,1fr); }
+    #sequence-chip-two .final-two { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div id="sequence-chip-two">
+  <div class="input-row" aria-label="芯片输入">
+    <span class="viz-badge">a₁ = 13</span>
+    <span class="viz-badge">d = −2</span>
+  </div>
+  <section class="card" aria-live="polite">
+    <div class="stage-shell"><div id="chip-two-stage" class="stage"></div></div>
+  </section>
+  <div class="controls-shell">
+    <div class="viz-controls" aria-label="芯片二运行按钮">
+      <button type="button" class="btn btn-primary" id="next-term">排下一项（0/10）</button>
+      <button type="button" class="btn" id="drop-points" disabled>落成 aₙ 点列</button>
+      <button type="button" class="btn" id="next-sum" disabled>累计下一项（0/10）</button>
+      <button type="button" class="btn" id="seal-two" disabled>封存双图</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const root=document.getElementById('sequence-chip-two');
+    const stage=root.querySelector('#chip-two-stage');
+    const nextTerm=root.querySelector('#next-term');
+    const dropPoints=root.querySelector('#drop-points');
+    const nextSum=root.querySelector('#next-sum');
+    const sealTwo=root.querySelector('#seal-two');
+    const terms=[13,11,9,7,5,3,1,-1,-3,-5];
+    const sums=[13,24,33,40,45,48,49,48,45,40];
+    let termCount=0, sumCount=0, phase='terms';
+
+    const renderTerms=()=>{
+      stage.innerHTML='<div class="prompt">每按一次，只向右增加一个位置；每一步都减少2</div><div class="term-track" id="term-track"></div><div class="math-line">13，11，9，7，5，3，1，−1，−3，−5</div>';
+      const track=stage.querySelector('#term-track');
+      terms.forEach((value,index)=>{
+        const cell=document.createElement('div'); cell.className=`term-cell ${index<termCount?'filled':''}`;
+        cell.innerHTML=`<span class="term-index">a${index+1}</span><span class="term-value">${index<termCount?String(value).replace('-','−'):'？'}</span>`;
+        track.appendChild(cell);
+      });
+    };
+
+    const svgEl=(tag,attrs={})=>{const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el;};
+    const makeGraph=(kind,upto,compact=false)=>{
+      const svg=svgEl('svg',{class:'graph',viewBox:'0 0 900 330',role:'img','aria-label':kind==='a'?'通项数列的下降离散点图':'前n项和的抛物线离散点图'});
+      const x=n=>80+(n-1)*82;
+      const y=kind==='a'?(v=>205-v*8.5):(v=>285-v*4.5);
+      const axisY=kind==='a'?205:285;
+      [1,3,5,7,9].forEach(n=>svg.appendChild(svgEl('line',{class:'grid',x1:x(n),y1:34,x2:x(n),y2:axisY})));
+      svg.appendChild(svgEl('line',{class:'axis',x1:50,y1:axisY,x2:855,y2:axisY}));
+      svg.appendChild(svgEl('line',{class:'axis',x1:50,y1:305,x2:50,y2:28}));
+      const values=kind==='a'?terms:sums;
+      const guide=svgEl('path',{class:kind==='a'?'a-guide':'s-guide'});
+      const d=[];
+      if(kind==='a'){
+        for(let n=1;n<=10;n+=.08){const v=15-2*n;d.push(`${d.length?'L':'M'} ${x(n).toFixed(1)} ${y(v).toFixed(1)}`);}
+      }else{
+        for(let n=1;n<=10;n+=.08){const v=14*n-n*n;d.push(`${d.length?'L':'M'} ${x(n).toFixed(1)} ${y(v).toFixed(1)}`);}
+      }
+      guide.setAttribute('d',d.join(' '));svg.appendChild(guide);
+      values.slice(0,upto).forEach((value,index)=>svg.appendChild(svgEl('circle',{class:kind==='a'?'a-point':'s-point',cx:x(index+1),cy:y(value),r:7})));
+      for(let n=1;n<=10;n+=1){const label=svgEl('text',{x:x(n),y:axisY+22,'text-anchor':'middle',class:'muted'});label.textContent=String(n);svg.appendChild(label);}
+      const formula=svgEl('text',{x:kind==='a'?610:570,y:kind==='a'?54:58,class:'math','font-size':'21'});formula.textContent=kind==='a'?'aₙ = 15 − 2n':'Sₙ = 14n − n²';svg.appendChild(formula);
+      return svg;
+    };
+
+    const renderAGraph=()=>{
+      stage.innerHTML='<div class="prompt">十个数各自落到自己的整数位置；实心点才是数列</div><div class="graph-wrap" id="a-graph-wrap"></div><div class="math-line">aₙ = 15 − 2n</div>';
+      stage.querySelector('#a-graph-wrap').appendChild(makeGraph('a',10));
+    };
+
+    const renderSum=()=>{
+      const k=Math.max(sumCount,1), current=sumCount?sums[sumCount-1]:0;
+      const previous=sumCount>1?sums[sumCount-2]:0, added=sumCount?terms[sumCount-1]:0;
+      stage.innerHTML=`<div class="prompt">当前项进入累计器：Sₖ = Sₖ₋₁ + aₖ</div><div class="math-line">${sumCount?`S${sumCount} = ${previous} + (${String(added).replace('-','−')}) = ${current}`:'等待第一项进入'}</div><div class="graph-wrap" id="s-graph-wrap"></div>`;
+      stage.querySelector('#s-graph-wrap').appendChild(makeGraph('s',sumCount));
+    };
+
+    const renderFinal=()=>{
+      stage.innerHTML='<div class="prompt">芯片封存：一列数，两幅离散图</div><div class="final-two"><div class="final-graph" id="final-a"><div class="final-formula">aₙ = 15 − 2n</div></div><div class="final-graph" id="final-s"><div class="final-formula">Sₙ = 14n − n²</div></div></div>';
+      stage.querySelector('#final-a').prepend(makeGraph('a',10,true));
+      stage.querySelector('#final-s').prepend(makeGraph('s',10,true));
+    };
+
+    nextTerm.addEventListener('click',()=>{
+      if(phase!=='terms'||termCount>=10)return;
+      termCount+=1;renderTerms();nextTerm.textContent=`排下一项（${termCount}/10）`;
+      if(termCount===10){nextTerm.disabled=true;nextTerm.classList.remove('btn-primary');dropPoints.disabled=false;dropPoints.classList.add('btn-primary');}
+    });
+    dropPoints.addEventListener('click',()=>{
+      phase='a-graph';dropPoints.disabled=true;dropPoints.classList.remove('btn-primary');nextSum.disabled=false;nextSum.classList.add('btn-primary');renderAGraph();
+    });
+    nextSum.addEventListener('click',()=>{
+      if(sumCount>=10)return;sumCount+=1;renderSum();nextSum.textContent=`累计下一项（${sumCount}/10）`;
+      if(sumCount===10){nextSum.disabled=true;nextSum.classList.remove('btn-primary');sealTwo.disabled=false;sealTwo.classList.add('btn-primary');}
+    });
+    sealTwo.addEventListener('click',()=>{sealTwo.disabled=true;sealTwo.classList.remove('btn-primary');renderFinal();});
+    renderTerms();
+  })();
+</script>
+
+      </section>
+
+      <section class="route-panel" data-route-panel="3" hidden>
+        <style>
+  #sequence-chip-three { width: 100%; color: var(--foreground); }
+  #sequence-chip-three .input-row { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  #sequence-chip-three .stage-shell { min-height:430px; padding:18px; display:grid; place-items:center; }
+  #sequence-chip-three .stage { width:100%; display:grid; gap:10px; justify-items:center; }
+  #sequence-chip-three .prompt { color:var(--muted-foreground); text-align:center; }
+  #sequence-chip-three .graph { width:100%; height:auto; display:block; }
+  #sequence-chip-three .axis { stroke:var(--foreground); stroke-width:1.5; }
+  #sequence-chip-three .grid { stroke:var(--border); stroke-width:1; }
+  #sequence-chip-three .old-guide { fill:none; stroke:var(--viz-series-1); stroke-width:2; stroke-dasharray:8 7; opacity:.45; }
+  #sequence-chip-three .v-guide { fill:none; stroke:var(--viz-series-2); stroke-width:2.5; stroke-dasharray:9 7; opacity:.62; }
+  #sequence-chip-three .old-point { fill:var(--viz-series-1); stroke:var(--background); stroke-width:3; }
+  #sequence-chip-three .boundary-point { fill:var(--viz-series-3); stroke:var(--background); stroke-width:4; }
+  #sequence-chip-three .folded-point { fill:var(--viz-series-2); stroke:var(--background); stroke-width:3; }
+  #sequence-chip-three .ghost-point { fill:none; stroke:var(--viz-series-1); stroke-width:2.5; opacity:.48; }
+  #sequence-chip-three .split-line { stroke:var(--viz-series-3); stroke-width:2; stroke-dasharray:5 5; }
+  #sequence-chip-three .fold-arrow { stroke:var(--viz-series-2); stroke-width:2.2; fill:none; marker-end:url(#chip3-arrow); }
+  #sequence-chip-three .graph text { fill:var(--foreground); font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  #sequence-chip-three .graph .math { font-family:Georgia,"Times New Roman",serif; }
+  #sequence-chip-three .graph .muted { fill:var(--muted-foreground); }
+  #sequence-chip-three .formula-box { width:min(720px,100%); padding:13px 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--card); text-align:center; font-family:Georgia,"Times New Roman",serif; font-size:calc(var(--font-size-base)*1.12); line-height:1.55; }
+  #sequence-chip-three .piecewise { display:inline-grid; grid-template-columns:auto auto; column-gap:16px; text-align:left; vertical-align:middle; margin-left:7px; }
+  #sequence-chip-three .controls-shell { display:flex; justify-content:center; margin-top:14px; }
+  @media (max-width:680px){
+    #sequence-chip-three .stage-shell { min-height:390px; padding:10px; }
+    #sequence-chip-three .formula-box { font-size:var(--font-size-base); }
+    #sequence-chip-three .viz-controls { width:100%; }
+  }
+</style>
+
+<div id="sequence-chip-three">
+  <div class="input-row" aria-label="芯片输入">
+    <span class="viz-badge">a<sub>n</sub> = 15 − 2n</span>
+    <span class="viz-badge">目标：形成 |a<sub>n</sub>|</span>
+  </div>
+  <section class="card" aria-live="polite">
+    <div class="stage-shell"><div id="chip-three-stage" class="stage"></div></div>
+  </section>
+  <div class="controls-shell">
+    <div class="viz-controls" aria-label="芯片三运行按钮">
+      <button type="button" class="btn btn-primary" id="find-last-positive">找最后正点</button>
+      <button type="button" class="btn" id="find-first-negative" disabled>找第一负点</button>
+      <button type="button" class="btn" id="fold-next" disabled>翻折下一点（0/3）</button>
+      <button type="button" class="btn" id="seal-v" disabled>封存 V 形</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root=document.getElementById('sequence-chip-three');
+  const stage=root.querySelector('#chip-three-stage');
+  const b1=root.querySelector('#find-last-positive');
+  const b2=root.querySelector('#find-first-negative');
+  const b3=root.querySelector('#fold-next');
+  const b4=root.querySelector('#seal-v');
+  const values=[13,11,9,7,5,3,1,-1,-3,-5];
+  let phase=0, folded=0;
+  const NS='http://www.w3.org/2000/svg';
+  const el=(tag,attrs={})=>{const n=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));return n;};
+  const x=n=>76+(n-1)*84;
+  const y=v=>245-v*12;
+  const y0=y(0);
+
+  function graph(final=false){
+    const svg=el('svg',{class:'graph',viewBox:'0 0 900 370',role:'img','aria-labelledby':'chip3-title chip3-desc'});
+    const title=el('title',{id:'chip3-title'});title.textContent=final?'绝对值数列的V形离散点图':'递减数列逐点翻折为绝对值数列';svg.appendChild(title);
+    const desc=el('desc',{id:'chip3-desc'});desc.textContent=final?'整数位置一到十的绝对值点列，分界在第七项与第八项之间':'原数列第八到第十项按按钮逐个关于横轴翻折';svg.appendChild(desc);
+    const defs=el('defs');const marker=el('marker',{id:'chip3-arrow',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto-start-reverse'});marker.appendChild(el('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'var(--viz-series-2)'}));defs.appendChild(marker);svg.appendChild(defs);
+    [1,3,5,7,9].forEach(n=>svg.appendChild(el('line',{class:'grid',x1:x(n),y1:34,x2:x(n),y2:330})));
+    svg.appendChild(el('line',{class:'axis',x1:45,y1:y0,x2:855,y2:y0}));
+    svg.appendChild(el('line',{class:'axis',x1:45,y1:330,x2:45,y2:30}));
+    for(let n=1;n<=10;n++){const t=el('text',{x:x(n),y:y0+24,'text-anchor':'middle',class:'muted'});t.textContent=n;svg.appendChild(t);}
+    const nLabel=el('text',{x:850,y:y0-10,class:'math'});nLabel.textContent='n';svg.appendChild(nLabel);
+    const aLabel=el('text',{x:55,y:42,class:'math'});aLabel.textContent=final?'|aₙ|':'aₙ';svg.appendChild(aLabel);
+
+    if(final){
+      const d=[];for(let n=1;n<=10;n+=.05){const v=Math.abs(15-2*n);d.push(`${d.length?'L':'M'} ${x(n).toFixed(1)} ${y(v).toFixed(1)}`);}svg.appendChild(el('path',{class:'v-guide',d:d.join(' ')}));
+      values.forEach((v,i)=>svg.appendChild(el('circle',{class:'folded-point',cx:x(i+1),cy:y(Math.abs(v)),r:7})));
+      svg.appendChild(el('line',{class:'split-line',x1:(x(7)+x(8))/2,y1:58,x2:(x(7)+x(8))/2,y2:322}));
+      const l=el('text',{x:x(5.2),y:58,'text-anchor':'middle'});l.textContent='n ≤ 7';svg.appendChild(l);
+      const r=el('text',{x:x(8.7),y:58,'text-anchor':'middle'});r.textContent='n ≥ 8';svg.appendChild(r);
+      return svg;
+    }
+
+    const line=[];for(let n=1;n<=10;n+=.05){line.push(`${line.length?'L':'M'} ${x(n).toFixed(1)} ${y(15-2*n).toFixed(1)}`);}svg.appendChild(el('path',{class:'old-guide',d:line.join(' ')}));
+    values.forEach((v,i)=>{
+      const n=i+1;
+      if(n>=8 && n<8+folded){
+        svg.appendChild(el('circle',{class:'ghost-point',cx:x(n),cy:y(v),r:7}));
+        svg.appendChild(el('line',{class:'fold-arrow',x1:x(n),y1:y(v)-10,x2:x(n),y2:y(-v)+12}));
+        svg.appendChild(el('circle',{class:'folded-point',cx:x(n),cy:y(-v),r:7}));
+      } else {
+        const cls=(phase>=1&&n===7)||(phase>=2&&n===8)?'boundary-point':'old-point';
+        svg.appendChild(el('circle',{class:cls,cx:x(n),cy:y(v),r:7}));
+      }
+    });
+    if(phase>=2){
+      svg.appendChild(el('line',{class:'split-line',x1:(x(7)+x(8))/2,y1:58,x2:(x(7)+x(8))/2,y2:322}));
+      const split=el('text',{x:(x(7)+x(8))/2,y:49,'text-anchor':'middle'});split.textContent='整数分界';svg.appendChild(split);
+    }
+    if(phase>=1){const t=el('text',{x:x(7)-16,y:y(1)-18,'text-anchor':'end',class:'math'});t.textContent='a₇ = 1 > 0';svg.appendChild(t);}
+    if(phase>=2){const t=el('text',{x:x(8)+14,y:y(-1)+28,class:'math'});t.textContent='a₈ = −1 < 0';svg.appendChild(t);}
+    return svg;
+  }
+
+  function render(){
+    const prompts=['先别翻：最后一个正数藏在哪个整数位置？','已找到 a₇；接着找第一个负数。','分界锁在 7 与 8 之间；负点才需要翻折。',`第 ${7+folded} 项已越过横轴，原距离保持不变。`];
+    stage.innerHTML=`<div class="prompt">${prompts[phase===3?3:phase]}</div><div id="chip3-graph"></div>`;
+    stage.querySelector('#chip3-graph').appendChild(graph(false));
+  }
+  function renderFinal(){
+    stage.innerHTML='<div class="prompt">过程痕迹撤掉：只封存 V 形点列、整数分界与分段关系</div><div id="chip3-final-graph"></div><div class="formula-box">|aₙ| = |15 − 2n| = <span class="piecewise"><span>15 − 2n,</span><span>n ≤ 7</span><span>2n − 15,</span><span>n ≥ 8</span></span></div>';
+    stage.querySelector('#chip3-final-graph').appendChild(graph(true));
+  }
+  const advance=(from,to)=>{from.disabled=true;from.classList.remove('btn-primary');to.disabled=false;to.classList.add('btn-primary');};
+  b1.addEventListener('click',()=>{phase=1;advance(b1,b2);render();});
+  b2.addEventListener('click',()=>{phase=2;advance(b2,b3);render();});
+  b3.addEventListener('click',()=>{phase=3;folded+=1;b3.textContent=`翻折下一点（${folded}/3）`;render();if(folded===3)advance(b3,b4);});
+  b4.addEventListener('click',()=>{b4.disabled=true;b4.classList.remove('btn-primary');renderFinal();});
+  render();
+})();
+</script>
+
+      </section>
+
+      <section class="route-panel" data-route-panel="4" hidden>
+        <style>
+  #sequence-chip-four { width:100%; color:var(--foreground); }
+  #sequence-chip-four .source-row { display:flex; justify-content:center; gap:7px; flex-wrap:wrap; margin-bottom:12px; }
+  #sequence-chip-four .source-row .viz-badge { font-family:Georgia,"Times New Roman",serif; }
+  #sequence-chip-four .stage-shell { padding:10px 12px 16px; }
+  #sequence-chip-four .stage { width:100%; display:grid; gap:8px; justify-items:center; }
+  #sequence-chip-four .prompt { color:var(--muted-foreground); text-align:center; }
+  #sequence-chip-four .plot { width:100%; height:auto; display:block; }
+  #sequence-chip-four .axis { stroke:var(--foreground); stroke-width:1.6; }
+  #sequence-chip-four .grid { stroke:var(--border); stroke-width:1; }
+  #sequence-chip-four .left-guide { fill:none; stroke:var(--viz-series-1); stroke-width:3; stroke-dasharray:10 7; opacity:.62; }
+  #sequence-chip-four .right-guide { fill:none; stroke:var(--viz-series-2); stroke-width:3; stroke-dasharray:10 7; opacity:.7; }
+  #sequence-chip-four .left-point { fill:var(--viz-series-1); stroke:var(--background); stroke-width:4; }
+  #sequence-chip-four .right-point { fill:var(--viz-series-2); stroke:var(--background); stroke-width:4; }
+  #sequence-chip-four .current-ring { fill:none; stroke:var(--foreground); stroke-width:2; }
+  #sequence-chip-four .boundary { stroke:var(--viz-series-3); stroke-width:2; stroke-dasharray:6 5; }
+  #sequence-chip-four .plot text { fill:var(--foreground); font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  #sequence-chip-four .plot .math { font-family:Georgia,"Times New Roman",serif; }
+  #sequence-chip-four .plot .muted { fill:var(--muted-foreground); }
+  #sequence-chip-four .memory-line { width:min(820px,100%); text-align:center; font-family:Georgia,"Times New Roman",serif; }
+  #sequence-chip-four .controls-shell { display:flex; justify-content:center; margin-top:14px; }
+  @media (max-width:560px){
+    #sequence-chip-four .stage-shell { padding:6px 4px 12px; }
+    #sequence-chip-four .source-row { gap:4px; }
+  }
+</style>
+
+<div id="sequence-chip-four">
+  <div class="source-row" aria-label="绝对值数列输入">
+    <span class="viz-badge">13</span><span class="viz-badge">11</span><span class="viz-badge">9</span>
+    <span class="viz-badge">7</span><span class="viz-badge">5</span><span class="viz-badge">3</span>
+    <span class="viz-badge">1</span><span class="viz-badge">1</span><span class="viz-badge">3</span>
+    <span class="viz-badge">5</span>
+  </div>
+  <section class="card" aria-live="polite">
+    <div class="stage-shell"><div id="chip-four-stage" class="stage"></div></div>
+  </section>
+  <div class="controls-shell">
+    <div class="viz-controls" aria-label="芯片四运行按钮">
+      <button type="button" class="btn btn-primary" id="sum-left">累计正段（0/7）</button>
+      <button type="button" class="btn" id="lock-seven" disabled>锁定 T₇ = 49</button>
+      <button type="button" class="btn" id="sum-right" disabled>累计翻折段（0/3）</button>
+      <button type="button" class="btn" id="seal-sum" disabled>封存分段和</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root=document.getElementById('sequence-chip-four');
+  const stage=root.querySelector('#chip-four-stage');
+  const leftBtn=root.querySelector('#sum-left');
+  const lockBtn=root.querySelector('#lock-seven');
+  const rightBtn=root.querySelector('#sum-right');
+  const sealBtn=root.querySelector('#seal-sum');
+  const absTerms=[13,11,9,7,5,3,1,1,3,5];
+  const totals=[13,24,33,40,45,48,49,50,53,58];
+  let count=0, locked=false, sealed=false;
+  const NS='http://www.w3.org/2000/svg';
+  const make=(tag,attrs={})=>{const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e;};
+  const x=n=>92+(n-1)*88;
+  const y=v=>410-v*5.55;
+  const y0=y(0);
+
+  function pathFor(start,end,formula){
+    if(end<start)return '';
+    const d=[];
+    for(let n=start;n<=end+.001;n+=.04){const v=formula(n);d.push(`${d.length?'L':'M'} ${x(n).toFixed(1)} ${y(v).toFixed(1)}`);}
+    return d.join(' ');
+  }
+
+  function draw(){
+    const svg=make('svg',{class:'plot',viewBox:'0 0 960 470',role:'img','aria-labelledby':'chip4-title chip4-desc'});
+    const title=make('title',{id:'chip4-title'});title.textContent='绝对值数列逐项累计为Tn';svg.appendChild(title);
+    const desc=make('desc',{id:'chip4-desc'});desc.textContent='前七项沿第一段抛物线累计，第八项以后沿第二段抛物线累计';svg.appendChild(desc);
+    [10,20,30,40,50,60].forEach(v=>{
+      svg.appendChild(make('line',{class:'grid',x1:58,y1:y(v),x2:920,y2:y(v)}));
+      const t=make('text',{x:48,y:y(v)+5,'text-anchor':'end',class:'muted'});t.textContent=v;svg.appendChild(t);
+    });
+    svg.appendChild(make('line',{class:'axis',x1:58,y1:y0,x2:925,y2:y0}));
+    svg.appendChild(make('line',{class:'axis',x1:58,y1:430,x2:58,y2:50}));
+    for(let n=1;n<=10;n++){
+      const t=make('text',{x:x(n),y:y0+25,'text-anchor':'middle',class:'muted'});t.textContent=n;svg.appendChild(t);
+    }
+    const yl=make('text',{x:66,y:66,class:'math'});yl.textContent='Tₙ';svg.appendChild(yl);
+    const nl=make('text',{x:916,y:y0-12,class:'math'});nl.textContent='n';svg.appendChild(nl);
+
+    if(count>0){
+      const leftEnd=Math.min(count,7);
+      svg.appendChild(make('path',{class:'left-guide',d:pathFor(1,leftEnd,n=>14*n-n*n)}));
+    }
+    if(count>=8){
+      svg.appendChild(make('path',{class:'right-guide',d:pathFor(7,count,n=>n*n-14*n+98)}));
+    }
+    if(locked || count>=8 || sealed){
+      const divider=(x(7)+x(8))/2;
+      svg.appendChild(make('line',{class:'boundary',x1:divider,y1:70,x2:divider,y2:y0}));
+      const t=make('text',{x:divider,y:60,'text-anchor':'middle'});t.textContent='7 | 8';svg.appendChild(t);
+    }
+    totals.slice(0,count).forEach((v,i)=>{
+      const cls=i<7?'left-point':'right-point';
+      svg.appendChild(make('circle',{class:cls,cx:x(i+1),cy:y(v),r:9}));
+    });
+    if(count>0 && !sealed){
+      const n=count,v=totals[n-1];
+      svg.appendChild(make('circle',{class:'current-ring',cx:x(n),cy:y(v),r:15}));
+      const anchor=n>=9?'end':'start';
+      const dx=n>=9?-18:18;
+      const line1=make('text',{x:x(n)+dx,y:y(v)-15,'text-anchor':anchor,class:'math'});line1.textContent=`T${n} = ${v}`;svg.appendChild(line1);
+      const line2=make('text',{x:x(n)+dx,y:y(v)+8,'text-anchor':anchor,class:'muted'});line2.textContent=`刚加入 |a${n}| = ${absTerms[n-1]}`;svg.appendChild(line2);
+    }
+    if(sealed){
+      const leftLabel=make('text',{x:x(3.6),y:95,'text-anchor':'middle',class:'math'});leftLabel.textContent='Tₙ = 14n − n²';svg.appendChild(leftLabel);
+      const rightLabel=make('text',{x:x(8.6),y:112,'text-anchor':'middle',class:'math'});rightLabel.textContent='Tₙ = n² − 14n + 98';svg.appendChild(rightLabel);
+      const b=make('text',{x:x(7),y:y(49)+32,'text-anchor':'middle'});b.textContent='T₇ = 49';svg.appendChild(b);
+    }
+    return svg;
+  }
+
+  function prompt(){
+    if(sealed)return '只封存两段累计轨迹；分界仍在第7项与第8项之间。';
+    if(count===0)return '每按一次，把下一个 |aₙ| 加进累计和。';
+    if(count<7)return `累计器：${count===1?0:totals[count-2]} + ${absTerms[count-1]} = ${totals[count-1]}`;
+    if(count===7 && !locked)return '前7项已经累计完成；先把固定接头 T₇ 锁住。';
+    if(locked && count===7)return '从 T₇ = 49 接着走；翻折后的1、3、5继续向上累计。';
+    if(count<10)return `右段累计：${totals[count-2]} + ${absTerms[count-1]} = ${totals[count-1]}`;
+    return '十项已经走完；撤掉逐项运算，只留下分段累计关系。';
+  }
+
+  function memoryLine(){
+    if(sealed)return '<div class="memory-line">Tₙ = S₇ − (Sₙ − S₇) = 2S₇ − Sₙ，&nbsp; n ≥ 8</div>';
+    if(locked && count>=7)return '<div class="memory-line">接头不动：T₇ = S₇ = 49</div>';
+    return '';
+  }
+
+  function render(){
+    stage.innerHTML=`<div class="prompt">${prompt()}</div><div id="chip4-plot"></div>${memoryLine()}`;
+    stage.querySelector('#chip4-plot').appendChild(draw());
+  }
+  function pass(from,to){from.disabled=true;from.classList.remove('btn-primary');to.disabled=false;to.classList.add('btn-primary');}
+  leftBtn.addEventListener('click',()=>{
+    if(count>=7)return;count++;leftBtn.textContent=`累计正段（${count}/7）`;render();
+    if(count===7)pass(leftBtn,lockBtn);
+  });
+  lockBtn.addEventListener('click',()=>{locked=true;pass(lockBtn,rightBtn);render();});
+  rightBtn.addEventListener('click',()=>{
+    if(count>=10)return;count++;rightBtn.textContent=`累计翻折段（${count-7}/3）`;render();
+    if(count===10)pass(rightBtn,sealBtn);
+  });
+  sealBtn.addEventListener('click',()=>{sealed=true;sealBtn.disabled=true;sealBtn.classList.remove('btn-primary');render();});
+  render();
+})();
+</script>
+
+      </section>
+    <style id="mobile-compatibility-overrides">
+      #sequence-chip-one .slot.locked { background: #eeebf8; }
+      #sequence-chip-one .a-brick,
+      #sequence-chip-one .a-strip { background: #cbdfe7; }
+      #sequence-chip-one .d-brick {
+        background: repeating-linear-gradient(135deg, #e4c4ad 0 5px, #f4e8df 5px 10px);
+      }
+      #sequence-chip-one .d-triangle { background: #e8cfbd; }
+      #sequence-chip-two .term-cell.filled { background: #e7f0f3; }
+    </style>
+  </main>
+  <script>
+    (() => {
+      const shell = document.getElementById('sequence-memory-experience');
+      const tabs = Array.from(shell.querySelectorAll('[data-route-tab]'));
+      const panels = Array.from(shell.querySelectorAll('[data-route-panel]'));
+      const statusText = shell.querySelector('#route-status-text');
+      const nextButton = shell.querySelector('#route-next');
+      const restartButton = shell.querySelector('#route-restart');
+      const names = ['芯片一', '芯片二', '芯片三', '芯片四'];
+      const actionCounts = ['四个', '二十二个', '六个', '十二个'];
+      let current = 1;
+      let unlocked = 1;
+      const completed = [false, false, false, false];
+
+      const show = (number) => {
+        if (number > unlocked) return;
+        current = number;
+        panels.forEach((panel, index) => { panel.hidden = index + 1 !== number; });
+        tabs.forEach((tab, index) => {
+          if (index + 1 === number) tab.setAttribute('aria-current', 'step');
+          else tab.removeAttribute('aria-current');
+        });
+        const isComplete = completed[number - 1];
+        statusText.textContent = isComplete
+          ? names[number - 1] + '已封存。' + (number < 4 ? '可以进入' + names[number] + '。' : '四芯片线路训练完成。')
+          : '当前：' + names[number - 1] + '。按芯片内部按钮完成' + actionCounts[number - 1] + '记忆动作。';
+        nextButton.disabled = !isComplete || number === 4;
+        nextButton.textContent = number < 4 ? '进入' + names[number] : '训练完成';
+        window.scrollTo(0, 0);
+      };
+
+      const markComplete = (number) => {
+        if (completed[number - 1]) return;
+        completed[number - 1] = true;
+        if (number < 4) {
+          unlocked = Math.max(unlocked, number + 1);
+          tabs[number].disabled = false;
+        }
+        if (current === number) show(number);
+      };
+
+      const isComplete = (number) => {
+        if (number === 1) return shell.querySelectorAll('#sequence-chip-one [data-step][aria-pressed="true"]').length === 4;
+        if (number === 2) return shell.querySelector('#sequence-chip-two .prompt')?.textContent.includes('芯片封存');
+        if (number === 3) return shell.querySelector('#sequence-chip-three .prompt')?.textContent.includes('过程痕迹撤掉');
+        return shell.querySelector('#sequence-chip-four .prompt')?.textContent.includes('只封存两段累计轨迹');
+      };
+
+      [1, 2, 3, 4].forEach((number) => {
+        const root = shell.querySelector('#sequence-chip-' + ['one', 'two', 'three', 'four'][number - 1]);
+        const observer = new MutationObserver(() => { if (isComplete(number)) markComplete(number); });
+        observer.observe(root, { subtree: true, childList: true, attributes: true, characterData: true });
+      });
+
+      tabs.forEach((tab) => tab.addEventListener('click', () => show(Number(tab.dataset.routeTab))));
+      nextButton.addEventListener('click', () => show(Math.min(4, current + 1)));
+      restartButton.addEventListener('click', () => window.location.reload());
+      show(1);
+    })();
+  </script>
+</body>
+</html>
